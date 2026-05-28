@@ -1,6 +1,6 @@
 # LLM API Gateway
 
-A production-ready FastAPI microservice for running LLM-powered agents and workflows using LangGraph and the Anthropic Claude API. This service provides a structured gateway for conversational AI agents with built-in observability.
+A production-ready FastAPI microservice for running LLM-powered agents and workflows using LangGraph and the Anthropic Claude API. This service provides structured gateway for conversational AI agents with built-in observability.
 
 ## Overview
 
