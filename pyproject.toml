@@ -57,7 +57,7 @@ skip-magic-trailing-comma = true
 [tool.pyright]
 exclude = ["**/__pycache__"]
 ignore = []
-include = ["src"]
+include = ["llm_api"]
 strict = []
 venvPath = ".venv"
 reportMissingImports = true
