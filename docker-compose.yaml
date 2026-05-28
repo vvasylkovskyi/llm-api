@@ -1,0 +1,16 @@
+services:
+  server:
+    container_name: llm-api
+    image: ${DOCKER_IMAGE:-llm-api:local}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - ENABLE_INSTRUMENTATION=true
+      - ALLOY_HOST=host.docker.internal
+      - SERVICE_NAME=llm-api
+      - PHOENIX_COLLECTOR_ENDPOINT=http://host.docker.internal:4318/v1/traces
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - PHOENIX_API_KEY=${PHOENIX_API_KEY}
+    ports:
+      - "10000:10000"

@@ -1,0 +1,36 @@
+import logging
+import os
+
+from fastapi import FastAPI
+from opentelemetry import metrics
+from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+from opentelemetry.sdk.resources import Resource
+from phoenix.otel import register
+
+from llm_api.settings.app import AppSettings
+
+logger = logging.getLogger(__name__)
+
+
+def setup_instrumentation(app: FastAPI, settings: AppSettings) -> None:
+    register(
+        project_name="default",
+        auto_instrument=True,
+        endpoint=settings.phoenix_collector_endpoint,
+    )
+
+    resource = Resource(attributes={"service.name": os.getenv("SERVICE_NAME", "default-service")})
+    exporter = OTLPMetricExporter(endpoint=f"http://{settings.alloy_host}:4318/v1/metrics")
+    reader = PeriodicExportingMetricReader(exporter, export_interval_millis=15_000)
+    provider = MeterProvider(resource=resource, metric_readers=[reader])
+    metrics.set_meter_provider(provider)
+
+    FastAPIInstrumentor.instrument_app(app)
+
+    logging.getLogger("opentelemetry").setLevel(logging.DEBUG)
+    logging.getLogger("urllib3").setLevel(logging.DEBUG)
+
+    logger.info("Instrumentation initialized")
