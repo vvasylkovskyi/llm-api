@@ -117,6 +117,7 @@ def fetch_file(
     # Check rate limit even for 304
     remaining = int(response.headers.get("X-RateLimit-Remaining", 9999))
     reset_at = int(response.headers.get("X-RateLimit-Reset", 0))
+    print(f"  [rate limit] {remaining} requests remaining", flush=True)
 
     if response.status_code == 304:
         # Not modified — use cached content, does not count against rate limit
