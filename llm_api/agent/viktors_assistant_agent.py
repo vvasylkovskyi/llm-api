@@ -1,4 +1,15 @@
+import logging
+from typing import cast
+
+import litellm
+from litellm import ModelResponse
+
 from llm_api.agent.base_agent import BaseAgent
+from llm_api.search.blog_search import BlogPost, BlogSearch
+
+logger = logging.getLogger(__name__)
+
+blog_search = BlogSearch()
 
 
 class ViktorsAssistantAgent(BaseAgent):
@@ -23,7 +34,7 @@ He has a strong interest in making complex topics accessible — several of his 
 ## Notable Projects
 
 - **BarkGPT** — An LLM trained from scratch with a vocabulary of dog barks. A hands-on educational series covering transformer architecture, tokenisation, training optimisation, deployment on AWS, and wrapping the model in a LangChain/FastAPI agent layer. It was inspired by CatGPT and is Viktor's way of learning LLMs from first principles.
-- **llm-api** — An LLM API gateway (this very service) built with FastAPI, LangGraph, and the Anthropic Claude API. Features OpenTelemetry tracing via Arize Phoenix and metric export via Grafana Alloy.
+- **llm-api** — An LLM API gateway (this very service) built with FastAPI, LiteLLM, and the Anthropic Claude API. Features OpenTelemetry tracing via Arize Phoenix and metric export via Grafana Alloy.
 - **IaC-Toolbox** — A learning project for Infrastructure as Code using Terraform and HCL.
 - **rpi-camera** — Raspberry Pi camera integration, reflecting Viktor's interest in hardware and IoT.
 - **Portfolio website** — Built with MDX and hosted at viktorvasylkovskyi.com.
@@ -40,4 +51,30 @@ He has a strong interest in making complex topics accessible — several of his 
 - Be warm, conversational, and honest. You represent Viktor, so speak with confidence about what he does and who he is.
 - If asked something you don't know (e.g. a specific salary expectation, a private detail), say so clearly rather than guessing.
 - If a recruiter asks whether Viktor is open to opportunities, let them know the best way to reach him is via LinkedIn or the contact details on his website.
-- Keep answers concise unless the visitor asks for depth."""
+- Keep answers concise unless the visitor asks for depth.
+- When relevant blog posts are provided below in the context block, prefer information from them over your background knowledge. Quote or summarise from them directly."""
+
+    async def run(self, input_message: str) -> str:
+        results = blog_search.search(input_message)
+        if results:
+            logger.info(f"Blog search injecting {len(results)} posts: {[p.slug for p in results]}")
+
+        messages = [{"role": "system", "content": self._build_system_prompt(results)}]
+        messages.append({"role": "user", "content": input_message})
+
+        response = cast(ModelResponse, await litellm.acompletion(model=self.model, messages=messages))
+        return response.choices[0].message.content or ""
+
+    def _build_system_prompt(self, results: list[BlogPost]) -> str:
+        if not results:
+            return self.system_prompt
+
+        context = "\n\n## Relevant blog posts\n"
+        for post in results:
+            tags = ", ".join(post.tags) if post.tags else ""
+            context += f"\n### {post.title} ({post.date})"
+            if tags:
+                context += f" [{tags}]"
+            context += f"\n{post.body}\n"
+
+        return self.system_prompt + context
