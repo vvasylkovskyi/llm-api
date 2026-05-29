@@ -1,8 +1,10 @@
 import logging
 import os
 import sys
+from typing import cast
 
 import litellm
+from litellm import ModelResponse
 
 logger = logging.getLogger(__name__)
 
@@ -24,5 +26,5 @@ class BaseAgent:
             messages.append({"role": "system", "content": self.system_prompt})
         messages.append({"role": "user", "content": input_message})
 
-        response = await litellm.acompletion(model=self.model, messages=messages)
-        return response.choices[0].message.content
+        response = cast(ModelResponse, await litellm.acompletion(model=self.model, messages=messages))
+        return response.choices[0].message.content or "Oups, something went wrong"
