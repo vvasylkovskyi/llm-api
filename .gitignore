@@ -214,3 +214,5 @@ terraform.tfstate.backup
 **/.aws-credentials
 .terraform.lock.hcl
 .terraform.tfstate.lock.info
+.claude/worktrees/
+.claude
