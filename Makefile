@@ -1,4 +1,4 @@
-.PHONY: clean install dev-install lint format check db-up db-down migrate migrate-auto rollback
+.PHONY: clean install dev-install lint format check db-up db-down db-create migrate migrate-auto rollback
 
 # Clean up generated files
 clean:
@@ -51,6 +51,11 @@ db-up:
 db-down:
 	@echo "Stopping local PostgreSQL..."
 	docker compose -f docker-compose.dev.yaml down
+
+# Create the application database if it does not exist
+db-create:
+	@echo "Creating database if not exists..."
+	uv run python -m llm_api.database.create_db
 
 # Apply all pending migrations
 migrate:

@@ -62,5 +62,8 @@ jobs:
       - name: Install dependencies
         run: uv sync
 
+      - name: Create database if not exists
+        run: uv run python -m llm_api.database.create_db
+
       - name: Run Alembic migrations
         run: uv run alembic -c llm_api/database/alembic.ini upgrade head
