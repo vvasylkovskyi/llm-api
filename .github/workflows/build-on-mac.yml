@@ -59,6 +59,9 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v4
 
+      - name: Install libpq
+        run: brew install libpq
+
       - name: Install dependencies
         run: uv sync
 
