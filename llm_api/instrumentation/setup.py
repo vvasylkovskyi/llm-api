@@ -4,7 +4,6 @@ import os
 from fastapi import FastAPI
 from opentelemetry import metrics
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
-from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.sdk.resources import Resource
@@ -27,10 +26,5 @@ def setup_instrumentation(app: FastAPI, settings: AppSettings) -> None:
     reader = PeriodicExportingMetricReader(exporter, export_interval_millis=15_000)
     provider = MeterProvider(resource=resource, metric_readers=[reader])
     metrics.set_meter_provider(provider)
-
-    FastAPIInstrumentor.instrument_app(app)
-
-    logging.getLogger("opentelemetry").setLevel(logging.DEBUG)
-    logging.getLogger("urllib3").setLevel(logging.DEBUG)
 
     logger.info("Instrumentation initialized")

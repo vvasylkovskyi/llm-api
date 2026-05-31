@@ -206,15 +206,11 @@ def index_posts_from_github(
 
 
 def main() -> None:
+    
     parser = argparse.ArgumentParser(description="Build BM25 blog index from MDX files fetched via GitHub API.")
-    parser.add_argument(
-        "--remote-url",
-        required=True,
-        help=(
-            "Full GitHub tree URL, e.g. "
-            "https://github.com/vvasylkovskyi/vvasylkovskyi.github.io/tree/main/content/blog"
-        ),
-    )
+
+    remote_url = os.environ["GITHUB_REMOTE_URL"]
+
     parser.add_argument(
         "--output",
         default="data/blog_index.json",
@@ -231,11 +227,11 @@ def main() -> None:
 
     # Validate URL before making any API calls
     try:
-        parse_remote_url(args.remote_url)
+        parse_remote_url(remote_url)
     except ValueError as e:
         raise SystemExit(f"Error: {e}") from e
 
-    total, fetched, cached_count = index_posts_from_github(args.remote_url, args.output, args.etag_cache)
+    total, fetched, cached_count = index_posts_from_github(remote_url, args.output, args.etag_cache)
     print(f"Indexed {total} posts to {args.output} ({fetched} fetched, {cached_count} from cache)")
 
 

@@ -45,4 +45,4 @@ run:
 # Build the blog search index
 index:
 	@echo "Building blog search index..."
-	uv run python scripts/build_blog_index.py --posts-dir $(BLOG_POSTS_DIR) --output data/blog_index.json
+	uv run python scripts/build_blog_index.py --output data/blog_index.json
