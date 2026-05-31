@@ -1,5 +1,6 @@
 """Creates the application database if it does not already exist."""
 
+
 import sqlalchemy
 from sqlalchemy import text
 
@@ -10,12 +11,11 @@ admin_url = DATABASE_URL.replace(f"/{DB_NAME}", "/postgres")
 
 engine = sqlalchemy.create_engine(admin_url, isolation_level="AUTOCOMMIT")
 with engine.connect() as conn:
-    exists = conn.execute(
+    if exists := conn.execute(
         text("SELECT 1 FROM pg_database WHERE datname = :name"),
         {"name": DB_NAME},
-    ).fetchone()
-    if not exists:
+    ).fetchone():
+        print(f"Database '{DB_NAME}' already exists.")
+    else:
         conn.execute(text(f'CREATE DATABASE "{DB_NAME}"'))
         print(f"Database '{DB_NAME}' created.")
-    else:
-        print(f"Database '{DB_NAME}' already exists.")
