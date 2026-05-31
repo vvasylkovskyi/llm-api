@@ -1,4 +1,4 @@
-.PHONY: clean install dev-install lint format check
+.PHONY: clean install dev-install lint format check db-up db-down migrate migrate-auto rollback
 
 # Clean up generated files
 clean:
@@ -41,3 +41,28 @@ check: lint test-coverage
 run:
 	@echo "Starting the development server..."
 	uv run uvicorn llm_api.main:app --host 0.0.0.0 --port 10000 --reload
+
+# Start local dev database
+db-up:
+	@echo "Starting local PostgreSQL..."
+	docker compose -f docker-compose.dev.yaml up -d
+
+# Stop local dev database
+db-down:
+	@echo "Stopping local PostgreSQL..."
+	docker compose -f docker-compose.dev.yaml down
+
+# Apply all pending migrations
+migrate:
+	@echo "Running Alembic migrations..."
+	uv run alembic upgrade head
+
+# Auto-generate a migration (usage: make migrate-auto name=create_my_table)
+migrate-auto:
+	@echo "Generating migration: $(name)..."
+	uv run alembic revision --autogenerate -m "$(name)"
+
+# Rollback last migration
+rollback:
+	@echo "Rolling back last migration..."
+	uv run alembic downgrade -1

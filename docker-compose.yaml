@@ -15,7 +15,7 @@ services:
       - DB_HOST=100.95.50.80
       - DB_PORT=5432
       - DB_USER=postgres
-      - DB_PASSWORD=secret123
+      - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=mydb
     ports:
       - "10000:10000"
