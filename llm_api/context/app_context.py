@@ -16,11 +16,11 @@ class AppContext:
         self._app_settings = app_settings
 
     @classmethod
-    def initialize(cls, app: FastAPI, app_settings: AppSettings) -> "AppContext":
+    def initialize(cls, app_settings: AppSettings) -> "AppContext":
         if cls._instance is None:
             cls._instance = cls(app_settings)
             if app_settings.enable_instrumentation:
-                setup_instrumentation(app, app_settings)
+                setup_instrumentation(app_settings)
         return cls._instance
 
     @classmethod
