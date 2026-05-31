@@ -1,7 +1,6 @@
 import logging
 import os
 
-from fastapi import FastAPI
 from opentelemetry import metrics
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
 from opentelemetry.sdk.metrics import MeterProvider
@@ -14,7 +13,7 @@ from llm_api.settings.app import AppSettings
 logger = logging.getLogger(__name__)
 
 
-def setup_instrumentation(app: FastAPI, settings: AppSettings) -> None:
+def setup_instrumentation(settings: AppSettings) -> None:
     register(
         project_name="default",
         auto_instrument=True,

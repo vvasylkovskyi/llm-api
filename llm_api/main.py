@@ -14,8 +14,8 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    AppContext.initialize(app, get_settings())
+async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
+    AppContext.initialize(get_settings())
     yield
 
 
@@ -25,7 +25,6 @@ FastAPIInstrumentor.instrument_app(app)
 
 logging.getLogger("opentelemetry").setLevel(logging.DEBUG)
 logging.getLogger("urllib3").setLevel(logging.DEBUG)
-
 
 app.include_router(create_router())
 
