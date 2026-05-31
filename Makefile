@@ -55,14 +55,14 @@ db-down:
 # Apply all pending migrations
 migrate:
 	@echo "Running Alembic migrations..."
-	uv run alembic upgrade head
+	uv run alembic -c llm_api/database/alembic.ini upgrade head
 
 # Auto-generate a migration (usage: make migrate-auto name=create_my_table)
 migrate-auto:
 	@echo "Generating migration: $(name)..."
-	uv run alembic revision --autogenerate -m "$(name)"
+	uv run alembic -c llm_api/database/alembic.ini revision --autogenerate -m "$(name)"
 
 # Rollback last migration
 rollback:
 	@echo "Rolling back last migration..."
-	uv run alembic downgrade -1
+	uv run alembic -c llm_api/database/alembic.ini downgrade -1
