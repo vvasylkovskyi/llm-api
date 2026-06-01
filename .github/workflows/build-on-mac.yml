@@ -67,3 +67,4 @@ jobs:
 
       - name: Run Alembic migrations
         run: uv run alembic -c llm_api/database/alembic.ini upgrade head
+

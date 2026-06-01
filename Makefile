@@ -42,6 +42,18 @@ run:
 	@echo "Starting the development server..."
 	uv run uvicorn llm_api.main:app --host 0.0.0.0 --port 10000 --reload
 
+# Build the local JSON blog search index (no database required)
+index:
+	@echo "Building local JSON blog search index..."
+	cd blog_index && uv run python build_blog_index.py \
+		--remote-url "$(GITHUB_REMOTE_URL)" \
+		--output ../data/blog_index.json
+
+# Index blog posts into Postgres via the blog_index subproject
+index-db:
+	@echo "Indexing blog posts into Postgres..."
+	cd blog_index && make index
+
 # Start local dev database
 db-up:
 	@echo "Starting local PostgreSQL..."
