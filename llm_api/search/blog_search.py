@@ -39,7 +39,7 @@ class BlogSearch:
         if self._engine is None:
             return
         from llm_api.search.blog_posts_indexer import BlogPostsIndexer
-        logger.info("No posts in index — retrying indexing from database")
+        logger.info("Reindexing blog posts from database")
         try:
             refreshed = await BlogPostsIndexer(self._engine).index()
             self._rebuild(refreshed._posts)
@@ -47,8 +47,7 @@ class BlogSearch:
             logger.exception("Re-index attempt failed")
 
     async def search(self, query: str, top_k: int = BLOG_SEARCH_TOP_K) -> list[BlogPost]:
-        if not self._posts:
-            await self._reindex()
+        await self._reindex()
         if not self._bm25 or not self._posts:
             return []
         scores = self._bm25.get_scores(query.lower().split())
