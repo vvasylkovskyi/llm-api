@@ -1,5 +1,4 @@
 import base64
-import json
 import pathlib
 import re
 import time
@@ -74,47 +73,16 @@ def _fetch_file(
     ref: str,
     file_path: str,
     auth_headers: dict,
-    etag_cache: dict,
-) -> tuple[str, str | None]:
-    """Fetch file content. Returns (content, new_etag). Uses ETag cache for 304 responses."""
+) -> str:
     url = f"https://api.github.com/repos/{owner}/{repo}/contents/{file_path}?ref={ref}"
-    headers = dict(auth_headers)
-    cached = etag_cache.get(file_path)
-    if cached and "etag" in cached:
-        headers["If-None-Match"] = cached["etag"]
-
-    response = client.get(url, headers=headers)
-    remaining = int(response.headers.get("X-RateLimit-Remaining", 9999))
-    reset_at = int(response.headers.get("X-RateLimit-Reset", 0))
-    print(f"  [rate limit] {remaining} requests remaining", flush=True)
-
-    if response.status_code == 304:
-        print(f"    304 cached: {file_path}", flush=True)
-        return cached["content"], None
-
-    if response.status_code in (403, 429):
-        response = _github_get(client, url, headers)
-    else:
-        response.raise_for_status()
-        if remaining <= MIN_REMAINING:
-            wait = max(0, reset_at - time.time()) + 1
-            print(f"  Rate limit low ({remaining} remaining). Sleeping {wait:.0f}s until reset.")
-            time.sleep(wait)
-
-    content = base64.b64decode(response.json()["content"]).decode("utf-8")
-    return content, response.headers.get("ETag")
+    response = _github_get(client, url, auth_headers)
+    return base64.b64decode(response.json()["content"]).decode("utf-8")
 
 
 class GitHubBlogScraper:
-    def __init__(
-        self,
-        remote_url: str,
-        token: str | None = None,
-        etag_cache_path: pathlib.Path | None = None,
-    ) -> None:
+    def __init__(self, remote_url: str, token: str | None = None) -> None:
         self._remote_url = remote_url
         self._token = token
-        self._etag_cache_path = etag_cache_path or pathlib.Path("data/blog_index_etags.json")
 
     def scrape(self) -> list[dict]:
         owner, repo, ref, path = parse_remote_url(self._remote_url)
@@ -124,10 +92,6 @@ class GitHubBlogScraper:
         )
         auth_headers["Accept"] = "application/vnd.github+json"
         auth_headers["X-GitHub-Api-Version"] = "2022-11-28"
-
-        etag_cache: dict = {}
-        if self._etag_cache_path.exists():
-            etag_cache = json.loads(self._etag_cache_path.read_text())
 
         posts: list[dict] = []
         with httpx.Client() as client:
@@ -140,12 +104,7 @@ class GitHubBlogScraper:
                 slug = pathlib.Path(file_path).stem
                 print(f"  Fetching {file_path}...", flush=True)
 
-                content, new_etag = _fetch_file(
-                    client, owner, repo, ref, file_path, auth_headers, etag_cache
-                )
-                if new_etag:
-                    etag_cache[file_path] = {"etag": new_etag, "content": content}
-
+                content = _fetch_file(client, owner, repo, ref, file_path, auth_headers)
                 post = frontmatter.loads(content)
                 body = strip_images(post.content)
                 posts.append({
@@ -157,8 +116,5 @@ class GitHubBlogScraper:
                     "body": body,
                 })
                 print(f"    Parsed: {slug}", flush=True)
-
-        self._etag_cache_path.parent.mkdir(parents=True, exist_ok=True)
-        self._etag_cache_path.write_text(json.dumps(etag_cache, indent=2, ensure_ascii=False))
 
         return posts

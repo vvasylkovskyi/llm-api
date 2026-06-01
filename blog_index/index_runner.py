@@ -1,11 +1,11 @@
 import argparse
 import asyncio
 import json
-import os
 import pathlib
 
 from database import BlogDatabase
 from github_scraper import GitHubBlogScraper, parse_remote_url
+from settings import get_settings
 
 
 class IndexRunner:
@@ -37,33 +37,21 @@ class IndexRunner:
 
 
 def main() -> None:
+    settings = get_settings()
+
     parser = argparse.ArgumentParser(
         description="Build BM25 blog index from MDX files fetched via GitHub API."
     )
-    remote_url_env = os.environ.get("GITHUB_REMOTE_URL", "")
-
     parser.add_argument(
         "--remote-url",
-        default=remote_url_env,
+        default=settings.github_remote_url,
         help="GitHub tree URL to the blog content folder (or set GITHUB_REMOTE_URL env var)",
-    )
-    parser.add_argument(
-        "--output",
-        default="data/blog_index.json",
-        type=pathlib.Path,
-        help="Output JSON file path (default: data/blog_index.json)",
-    )
-    parser.add_argument(
-        "--etag-cache",
-        default="data/blog_index_etags.json",
-        type=pathlib.Path,
-        help="Path to ETag cache file for incremental updates",
     )
     parser.add_argument(
         "--db",
         action="store_true",
         default=False,
-        help="Upsert posts into Postgres (requires DATABASE_URL env var)",
+        help="Upsert posts into Postgres (requires DB credentials via env vars)",
     )
     args = parser.parse_args()
 
@@ -77,18 +65,11 @@ def main() -> None:
 
     scraper = GitHubBlogScraper(
         remote_url=args.remote_url,
-        token=os.environ.get("GITHUB_TOKEN"),
-        etag_cache_path=args.etag_cache,
+        token=settings.github_token or None,
     )
 
     if args.db:
-        database_url = os.environ.get("DATABASE_URL")
-        if not database_url:
-            raise SystemExit(
-                "Error: --db flag requires DATABASE_URL environment variable. "
-                "Example: DATABASE_URL=postgresql://user:pass@host:5432/dbname"
-            )
-        runner = IndexRunner(scraper, database_url=database_url)
+        runner = IndexRunner(scraper, database_url=settings.database_url)
         total = asyncio.run(runner.run_db())
         print(f"Indexed {total} posts to Postgres")
     else:

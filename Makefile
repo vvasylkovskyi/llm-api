@@ -1,4 +1,4 @@
-.PHONY: clean install dev-install lint format check db-up db-down db-create migrate migrate-auto rollback
+.PHONY: clean install dev-install lint format check db-up db-down db-create migrate migrate-auto rollback index index-db
 
 # Clean up generated files
 clean:
@@ -45,14 +45,16 @@ run:
 # Build the local JSON blog search index (no database required)
 index:
 	@echo "Building local JSON blog search index..."
-	cd blog_index && uv run python build_blog_index.py \
+	cd blog_index && uv run python main.py \
 		--remote-url "$(GITHUB_REMOTE_URL)" \
 		--output ../data/blog_index.json
 
 # Index blog posts into Postgres via the blog_index subproject
 index-db:
 	@echo "Indexing blog posts into Postgres..."
-	cd blog_index && make index
+	cd blog_index && uv run python main.py \
+		--remote-url "$(GITHUB_REMOTE_URL)" \
+		--db
 
 # Start local dev database
 db-up:
