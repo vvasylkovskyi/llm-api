@@ -1,4 +1,4 @@
-.PHONY: clean install dev-install lint format check index
+.PHONY: clean install dev-install lint format check db-up db-down db-create migrate migrate-auto rollback
 
 # Clean up generated files
 clean:
@@ -46,3 +46,33 @@ run:
 index:
 	@echo "Building blog search index..."
 	uv run python scripts/build_blog_index.py --output data/blog_index.json
+=======
+# Start local dev database
+db-up:
+	@echo "Starting local PostgreSQL..."
+	docker compose -f docker-compose.dev.yaml up -d
+
+# Stop local dev database
+db-down:
+	@echo "Stopping local PostgreSQL..."
+	docker compose -f docker-compose.dev.yaml down
+
+# Create the application database if it does not exist
+db-create:
+	@echo "Creating database if not exists..."
+	uv run python -m llm_api.database.create_db
+
+# Apply all pending migrations
+migrate:
+	@echo "Running Alembic migrations..."
+	uv run alembic -c llm_api/database/alembic.ini upgrade head
+
+# Auto-generate a migration (usage: make migrate-auto name=create_my_table)
+migrate-auto:
+	@echo "Generating migration: $(name)..."
+	uv run alembic -c llm_api/database/alembic.ini revision --autogenerate -m "$(name)"
+
+# Rollback last migration
+rollback:
+	@echo "Rolling back last migration..."
+	uv run alembic -c llm_api/database/alembic.ini downgrade -1
