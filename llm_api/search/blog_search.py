@@ -1,9 +1,11 @@
+import asyncio
 import json
 import logging
 import os
 import pathlib
 from dataclasses import dataclass
 
+import asyncpg
 from rank_bm25 import BM25Okapi
 
 logger = logging.getLogger(__name__)
@@ -27,16 +29,48 @@ class BlogSearch:
         self._posts: list[BlogPost] | None = None
         self._bm25: BM25Okapi | None = None
 
-    def _load(self) -> None:
-        path = pathlib.Path(BLOG_INDEX_PATH)
-        if not path.exists():
-            logger.warning(f"Blog index not found at {path}. Search will return no results.")
-            self._posts = []
-            self._bm25 = None
-            return
-        raw = json.loads(path.read_text())
-        self._posts = [BlogPost(**p) for p in raw]
-        corpus = [(p.title + " " + " ".join(p.tags) + " " + p.body).lower().split() for p in self._posts]
+    async def _load_from_db(self) -> None:
+        """Load all blog posts from Postgres."""
+        database_url = os.environ["DATABASE_URL"]
+        # asyncpg requires plain postgresql:// scheme — strip +psycopg driver suffix if present
+        asyncpg_url = database_url.replace("postgresql+psycopg://", "postgresql://")
+        conn = await asyncpg.connect(asyncpg_url)
+        try:
+            rows = await conn.fetch(
+                "SELECT slug, title, date, tags, excerpt, body FROM blog_posts"
+            )
+            self._posts = [
+                BlogPost(
+                    slug=r["slug"],
+                    title=r["title"],
+                    date=str(r["date"]),
+                    tags=list(r["tags"] or []),
+                    excerpt=r["excerpt"] or "",
+                    body=r["body"],
+                )
+                for r in rows
+            ]
+        finally:
+            await conn.close()
+
+    def _load(self, index_path: str = BLOG_INDEX_PATH) -> None:
+        db_url = os.environ.get("DATABASE_URL")
+        if db_url:
+            asyncio.run(self._load_from_db())
+        else:
+            path = pathlib.Path(index_path)
+            if not path.exists():
+                logger.warning(f"Blog index not found at {path}. Search will return no results.")
+                self._posts = []
+                self._bm25 = None
+                return
+            raw = json.loads(path.read_text())
+            self._posts = [BlogPost(**p) for p in raw]
+
+        corpus = [
+            (p.title + " " + " ".join(p.tags) + " " + p.body).lower().split()
+            for p in self._posts
+        ]
         self._bm25 = BM25Okapi(corpus)
         logger.info(f"Blog search index loaded: {len(self._posts)} posts")
 
