@@ -21,8 +21,10 @@ class IndexRunner:
 
     async def run_db(self) -> int:
         assert self._database_url, "database_url is required for DB mode"
-        posts = self._scraper.scrape()
         async with BlogDatabase(self._database_url) as db:
+            await db.ping()
+            print("Database connection OK", flush=True)
+            posts = self._scraper.scrape()
             for post in posts:
                 await db.upsert_post(post)
                 print(f"    Upserted: {post['slug']}", flush=True)

@@ -25,6 +25,10 @@ class BlogDatabase:
     async def __aexit__(self, *_: object) -> None:
         await self.close()
 
+    async def ping(self) -> None:
+        assert self._conn is not None, "Not connected — call connect() first"
+        await self._conn.execute("SELECT 1")
+
     async def upsert_post(self, post: dict) -> None:
         assert self._conn is not None, "Not connected — call connect() first"
         await self._conn.execute(
