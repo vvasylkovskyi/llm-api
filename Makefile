@@ -46,7 +46,7 @@ run:
 index:
 	@echo "Building blog search index..."
 	uv run python scripts/build_blog_index.py --output data/blog_index.json
-=======
+
 # Start local dev database
 db-up:
 	@echo "Starting local PostgreSQL..."
