@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
 
-from llm_api.database.database import ping_db
+from llm_api.database.database import DatabaseEngineManager
 from llm_api.http.response import handle_response
 
 health_check_router = APIRouter(prefix="/health-check")
@@ -12,9 +12,9 @@ async def health_check():
 
 
 @health_check_router.get("/db")
-def health_check_db():
+async def health_check_db():
     try:
-        if ping_db():
+        if await DatabaseEngineManager.ping():
             return {"status": "ok", "db": "reachable"}
         raise HTTPException(status_code=500, detail="DB ping failed")
     except HTTPException:

@@ -1,26 +1,23 @@
 """add blog_posts table
 
-Revision ID: a1b2c3d4e5f6
-Revises:
+Revision ID: e1f2a3b4c5d6
+Revises: da17fa6f2667
 Create Date: 2026-06-01 00:00:00.000000
 
 """
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
 
-
-# revision identifiers, used by Alembic.
-revision: str = 'a1b2c3d4e5f6'
-down_revision: Union[str, Sequence[str], None] = None
+revision: str = 'e1f2a3b4c5d6'
+down_revision: Union[str, Sequence[str], None] = 'da17fa6f2667'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    """Create blog_posts table."""
     op.create_table(
         "blog_posts",
         sa.Column("slug", sa.Text(), nullable=False),
@@ -40,5 +37,4 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    """Drop blog_posts table."""
     op.drop_table("blog_posts")

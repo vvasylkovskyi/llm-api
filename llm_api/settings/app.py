@@ -1,6 +1,7 @@
 import logging
 from functools import lru_cache
 
+from pydantic import computed_field
 from pydantic_settings import BaseSettings
 
 logger = logging.getLogger(__name__)
@@ -12,11 +13,21 @@ class AppSettings(BaseSettings):
     enable_instrumentation: bool = False
     phoenix_collector_endpoint: str = "http://localhost:4318/v1/traces"
     alloy_host: str = "localhost"
+    db_user: str = "postgres"
+    db_password: str = "secret123"
+    db_name: str = "postgres"
+    db_host: str = "localhost"
+    db_port: str = "5432"
+
+    @computed_field
+    @property
+    def database_url(self) -> str:
+        return (
+            f"postgresql+psycopg://{self.db_user}:{self.db_password}"
+            f"@{self.db_host}:{self.db_port}/{self.db_name}"
+        )
 
 
 @lru_cache
 def get_settings():
     return AppSettings()
-
-
-app_settings = AppSettings()

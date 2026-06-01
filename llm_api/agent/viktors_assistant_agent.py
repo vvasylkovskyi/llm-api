@@ -5,11 +5,10 @@ import litellm
 from litellm import ModelResponse
 
 from llm_api.agent.base_agent import BaseAgent
-from llm_api.search.blog_search import BlogPost, BlogSearch
+from llm_api.context.app_context import AppContext
+from llm_api.search.blog_search import BlogPost
 
 logger = logging.getLogger(__name__)
-
-blog_search = BlogSearch()
 
 
 class ViktorsAssistantAgent(BaseAgent):
@@ -55,13 +54,15 @@ He has a strong interest in making complex topics accessible — several of his 
 - When relevant blog posts are provided below in the context block, prefer information from them over your background knowledge. Quote or summarise from them directly."""
 
     async def run(self, input_message: str) -> str:
-        results = blog_search.search(input_message)
+        blog_search = AppContext.get_instance().blog_search
+        results = blog_search.search(input_message) if blog_search is not None else []
         if results:
             logger.info(f"Blog search injecting {len(results)} posts: {[p.slug for p in results]}")
 
-        messages = [{"role": "system", "content": self._build_system_prompt(results)}]
-        messages.append({"role": "user", "content": input_message})
-
+        messages = [
+            {"role": "system", "content": self._build_system_prompt(results)},
+            {"role": "user", "content": input_message},
+        ]
         response = cast(ModelResponse, await litellm.acompletion(model=self.model, messages=messages))
         return response.choices[0].message.content or ""
 

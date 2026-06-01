@@ -15,8 +15,9 @@ logging.basicConfig(level=logging.DEBUG)
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
-    AppContext.initialize(get_settings())
+    await AppContext.initialize(get_settings())
     yield
+    await AppContext.close()
 
 
 app = FastAPI(lifespan=lifespan)

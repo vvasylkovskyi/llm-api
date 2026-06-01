@@ -8,7 +8,9 @@ from sqlmodel import SQLModel
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..")))
 
-from llm_api.database.config import DATABASE_URL  # noqa: E402
+from llm_api.settings.app import get_settings  # noqa: E402
+
+DATABASE_URL = get_settings().database_url
 
 # Import all models here so Alembic detects them for autogenerate
 # from llm_api.database.models.example import Example

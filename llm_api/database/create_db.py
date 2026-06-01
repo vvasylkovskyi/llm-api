@@ -1,21 +1,20 @@
 """Creates the application database if it does not already exist."""
 
-
 import sqlalchemy
 from sqlalchemy import text
 
-from llm_api.database.config import DATABASE_URL, DB_NAME
+from llm_api.settings.app import get_settings
 
-# Connect to the default 'postgres' database to issue CREATE DATABASE
-admin_url = DATABASE_URL.replace(f"/{DB_NAME}", "/postgres")
+settings = get_settings()
+admin_url = settings.database_url.replace(f"/{settings.db_name}", "/postgres")
 
 engine = sqlalchemy.create_engine(admin_url, isolation_level="AUTOCOMMIT")
 with engine.connect() as conn:
-    if exists := conn.execute(
+    if conn.execute(
         text("SELECT 1 FROM pg_database WHERE datname = :name"),
-        {"name": DB_NAME},
+        {"name": settings.db_name},
     ).fetchone():
-        print(f"Database '{DB_NAME}' already exists.")
+        print(f"Database '{settings.db_name}' already exists.")
     else:
-        conn.execute(text(f'CREATE DATABASE "{DB_NAME}"'))
-        print(f"Database '{DB_NAME}' created.")
+        conn.execute(text(f'CREATE DATABASE "{settings.db_name}"'))
+        print(f"Database '{settings.db_name}' created.")
