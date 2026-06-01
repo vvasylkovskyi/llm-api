@@ -7,29 +7,28 @@ jobs:
   index:
     runs-on: [self-hosted, Mac]
     env:
-      DB_HOST: 100.95.50.80
-      DB_PORT: 5432
-      DB_USER: postgres
-      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
       DB_NAME: viktor_blog
       DATABASE_URL: postgresql://postgres:${{ secrets.DB_PASSWORD }}@100.95.50.80:5432/viktor_blog
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GITHUB_REMOTE_URL: https://github.com/vvasylkovskyi/vvasylkovskyi.github.io/tree/main/content/blog
+    defaults:
+      run:
+        working-directory: blog_index
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
 
-      - name: Install dependencies
+      - name: Install blog_index dependencies
         run: uv sync
 
-      - name: Create blog database if not exists
-        run: uv run python -m llm_api.database.create_db
+      - name: Create viktor_blog database if not exists
+        run: uv run python create_db.py
 
-      - name: Run Alembic migrations
-        run: uv run alembic -c llm_api/database/alembic.ini upgrade head
+      - name: Run blog index migrations
+        run: uv run alembic -c alembic.ini upgrade head
 
       - name: Index blog posts into database
         run: |
-          uv run python scripts/build_blog_index.py \
+          uv run python build_blog_index.py \
             --remote-url "$GITHUB_REMOTE_URL" \
             --db
