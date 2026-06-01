@@ -4,6 +4,7 @@ from collections.abc import AsyncGenerator
 from fastapi import FastAPI
 from fastapi.concurrency import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 
 from llm_api.context.app_context import AppContext
 from llm_api.routes.routes import create_router
@@ -13,12 +14,17 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    AppContext.initialize(app, get_settings())
+async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
+    AppContext.initialize(get_settings())
     yield
 
 
 app = FastAPI(lifespan=lifespan)
+
+FastAPIInstrumentor.instrument_app(app)
+
+logging.getLogger("opentelemetry").setLevel(logging.DEBUG)
+logging.getLogger("urllib3").setLevel(logging.DEBUG)
 
 app.include_router(create_router())
 

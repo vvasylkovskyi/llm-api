@@ -45,3 +45,26 @@ jobs:
           docker compose down || true
           docker compose pull
           docker compose up -d
+
+  migrate:
+    runs-on: [self-hosted, Mac]
+    needs: deploy
+    env:
+      DB_HOST: 100.95.50.80
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      DB_NAME: mydb
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Create database if not exists
+        run: uv run python -m llm_api.database.create_db
+
+      - name: Run Alembic migrations
+        run: uv run alembic -c llm_api/database/alembic.ini upgrade head
+

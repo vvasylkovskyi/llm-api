@@ -1,4 +1,4 @@
-.PHONY: clean install dev-install lint format check index
+.PHONY: clean install dev-install lint format check db-up db-down db-create migrate migrate-auto rollback
 
 # Clean up generated files
 clean:
@@ -42,7 +42,44 @@ run:
 	@echo "Starting the development server..."
 	uv run uvicorn llm_api.main:app --host 0.0.0.0 --port 10000 --reload
 
-# Build the blog search index
+# Build the local JSON blog search index (no database required)
 index:
-	@echo "Building blog search index..."
-	uv run python scripts/build_blog_index.py --posts-dir $(BLOG_POSTS_DIR) --output data/blog_index.json
+	@echo "Building local JSON blog search index..."
+	cd blog_index && uv run python build_blog_index.py \
+		--remote-url "$(GITHUB_REMOTE_URL)" \
+		--output ../data/blog_index.json
+
+# Index blog posts into Postgres via the blog_index subproject
+index-db:
+	@echo "Indexing blog posts into Postgres..."
+	cd blog_index && make index
+
+# Start local dev database
+db-up:
+	@echo "Starting local PostgreSQL..."
+	docker compose -f docker-compose.dev.yaml up -d
+
+# Stop local dev database
+db-down:
+	@echo "Stopping local PostgreSQL..."
+	docker compose -f docker-compose.dev.yaml down
+
+# Create the application database if it does not exist
+db-create:
+	@echo "Creating database if not exists..."
+	uv run python -m llm_api.database.create_db
+
+# Apply all pending migrations
+migrate:
+	@echo "Running Alembic migrations..."
+	uv run alembic -c llm_api/database/alembic.ini upgrade head
+
+# Auto-generate a migration (usage: make migrate-auto name=create_my_table)
+migrate-auto:
+	@echo "Generating migration: $(name)..."
+	uv run alembic -c llm_api/database/alembic.ini revision --autogenerate -m "$(name)"
+
+# Rollback last migration
+rollback:
+	@echo "Rolling back last migration..."
+	uv run alembic -c llm_api/database/alembic.ini downgrade -1

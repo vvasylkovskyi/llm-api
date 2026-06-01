@@ -12,5 +12,10 @@ services:
       - PHOENIX_COLLECTOR_ENDPOINT=http://host.docker.internal:4318/v1/traces
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - PHOENIX_API_KEY=${PHOENIX_API_KEY}
+      - DB_HOST=100.95.50.80
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=secret123
+      - DB_NAME=mydb
     ports:
       - "10000:10000"
