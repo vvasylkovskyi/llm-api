@@ -10,9 +10,6 @@ jobs:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GITHUB_REMOTE_URL: https://github.com/vvasylkovskyi/vvasylkovskyi.github.io/tree/main/content/blog
-    defaults:
-      run:
-        working-directory: blog_index
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
@@ -22,6 +19,6 @@ jobs:
 
       - name: Index blog posts into database
         run: |
-          uv run python build_blog_index.py \
+          cd blog_index && uv run python main.py \
             --remote-url "$GITHUB_REMOTE_URL" \
             --db
