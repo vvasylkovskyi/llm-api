@@ -1,12 +1,13 @@
 import logging
 import os
-
 from pydantic import BaseModel
 from rank_bm25 import BM25Okapi
+from sqlalchemy.ext.asyncio import AsyncEngine
 
 logger = logging.getLogger(__name__)
 
 BLOG_SEARCH_TOP_K = int(os.getenv("BLOG_SEARCH_TOP_K", "3"))
+
 
 class BlogPost(BaseModel):
     slug: str
@@ -18,7 +19,11 @@ class BlogPost(BaseModel):
 
 
 class BlogSearch:
-    def __init__(self, posts: list[BlogPost]) -> None:
+    def __init__(self, posts: list[BlogPost], engine: AsyncEngine | None = None) -> None:
+        self._engine = engine
+        self._rebuild(posts)
+
+    def _rebuild(self, posts: list[BlogPost]) -> None:
         self._posts = posts
         if posts:
             corpus = [
@@ -30,7 +35,20 @@ class BlogSearch:
             self._bm25 = None
         logger.info(f"Blog search index loaded: {len(posts)} posts")
 
-    def search(self, query: str, top_k: int = BLOG_SEARCH_TOP_K) -> list[BlogPost]:
+    async def _reindex(self) -> None:
+        if self._engine is None:
+            return
+        from llm_api.search.blog_posts_indexer import BlogPostsIndexer
+        logger.info("No posts in index — retrying indexing from database")
+        try:
+            refreshed = await BlogPostsIndexer(self._engine).index()
+            self._rebuild(refreshed._posts)
+        except Exception:
+            logger.exception("Re-index attempt failed")
+
+    async def search(self, query: str, top_k: int = BLOG_SEARCH_TOP_K) -> list[BlogPost]:
+        if not self._posts:
+            await self._reindex()
         if not self._bm25 or not self._posts:
             return []
         scores = self._bm25.get_scores(query.lower().split())

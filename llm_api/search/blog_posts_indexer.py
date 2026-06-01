@@ -29,4 +29,4 @@ class BlogPostsIndexer:
             )
             for r in rows
         ]
-        return BlogSearch(posts)
+        return BlogSearch(posts, engine=self._engine)

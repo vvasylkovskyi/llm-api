@@ -55,7 +55,7 @@ He has a strong interest in making complex topics accessible — several of his 
 
     async def run(self, input_message: str) -> str:
         blog_search = AppContext.get_instance().blog_search
-        results = blog_search.search(input_message) if blog_search is not None else []
+        results = await blog_search.search(input_message) if blog_search is not None else []
         if results:
             logger.info(f"Blog search injecting {len(results)} posts: {[p.slug for p in results]}")
 
