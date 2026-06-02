@@ -18,7 +18,7 @@ class AppSettings(BaseSettings):
     db_name: str = "postgres"
     db_host: str = "localhost"
     db_port: str = "5432"
-    db_vector_user: str = "pgvector"
+    db_vector_user: str = "postgres"
     db_vector_password: str = "Test1234"
     db_vector_name: str = "mydb"
     db_vector_host: str = "localhost"
