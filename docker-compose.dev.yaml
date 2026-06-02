@@ -27,7 +27,7 @@ services:
       - ./pgvector/init:/docker-entrypoint-initdb.d
     healthcheck:
       test: >
-        psql -U ${DB_VECTOR_USER:-pgvector} -d ${DB_VECTOR_NAME:-mydb} -c
+        psql -U ${DB_VECTOR_USER:-postgres} -d ${DB_VECTOR_NAME:-mydb} -c
         "SELECT 1 FROM pg_extension WHERE extname = 'vector';"
         | grep -q 1 || exit 1
       interval: 30s
