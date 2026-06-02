@@ -19,6 +19,7 @@ jobs:
       DB_VECTOR_NAME: mydb
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GITHUB_REMOTE_URL: https://github.com/vvasylkovskyi/vvasylkovskyi.github.io/tree/main/content/blog
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
