@@ -21,7 +21,7 @@ class AppSettings(BaseSettings):
     db_vector_user: str = "postgres"
     db_vector_password: str = "Test1234"
     db_vector_name: str = "mydb"
-    db_vector_host: str = "localhost"
+    db_vector_host: str = "100.95.50.80"
     db_vector_port: str = "5433"
 
     @computed_field
