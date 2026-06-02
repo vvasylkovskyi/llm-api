@@ -71,6 +71,11 @@ def main() -> None:
         help="GitHub tree URL to the blog content folder (or set GITHUB_REMOTE_URL env var)",
     )
     parser.add_argument(
+        "--openai-api-key",
+        default=settings.openai_api_key,
+        help="OpenAI API key (or set OPENAI_API_KEY env var)",
+    )
+    parser.add_argument(
         "--db",
         action="store_true",
         default=False,

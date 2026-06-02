@@ -30,5 +30,4 @@ jobs:
         run: |
           cd blog_index && uv run python main.py \
             --remote-url "$GITHUB_REMOTE_URL" \
-            --openai-api-key "$OPENAI_API_KEY" \
             --db --embed
