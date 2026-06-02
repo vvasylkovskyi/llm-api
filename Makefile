@@ -1,4 +1,4 @@
-.PHONY: clean install dev-install lint format check db-up db-down db-create migrate migrate-auto rollback index index-db
+.PHONY: clean install dev-install lint format check db-up db-down db-create migrate migrate-auto rollback vector-db-create vector-migrate vector-migrate-auto vector-rollback index index-db index-db-embed
 
 # Clean up generated files
 clean:
@@ -69,19 +69,47 @@ db-down:
 # Create the application database if it does not exist
 db-create:
 	@echo "Creating database if not exists..."
-	uv run python -m llm_api.database.create_db
+	uv run python -m llm_api.databases.relational_database.create_db
 
 # Apply all pending migrations
 migrate:
 	@echo "Running Alembic migrations..."
-	uv run alembic -c llm_api/database/alembic.ini upgrade head
+	uv run alembic -c llm_api/databases/relational_database/alembic.ini upgrade head
 
 # Auto-generate a migration (usage: make migrate-auto name=create_my_table)
 migrate-auto:
 	@echo "Generating migration: $(name)..."
-	uv run alembic -c llm_api/database/alembic.ini revision --autogenerate -m "$(name)"
+	uv run alembic -c llm_api/databases/relational_database/alembic.ini revision --autogenerate -m "$(name)"
 
 # Rollback last migration
 rollback:
 	@echo "Rolling back last migration..."
-	uv run alembic -c llm_api/database/alembic.ini downgrade -1
+	uv run alembic -c llm_api/databases/relational_database/alembic.ini downgrade -1
+
+# Create the vector database if it does not exist
+vector-db-create:
+	@echo "Creating vector database if not exists..."
+	uv run python -m llm_api.databases.vector_database.create_db
+
+# Apply all pending vector DB migrations
+vector-migrate:
+	@echo "Running vector DB Alembic migrations..."
+	uv run alembic -c llm_api/databases/vector_database/alembic.ini upgrade head
+
+# Auto-generate a vector DB migration (usage: make vector-migrate-auto name=add_my_table)
+vector-migrate-auto:
+	@echo "Generating vector DB migration: $(name)..."
+	uv run alembic -c llm_api/databases/vector_database/alembic.ini revision --autogenerate -m "$(name)"
+
+# Rollback last vector DB migration
+vector-rollback:
+	@echo "Rolling back last vector DB migration..."
+	uv run alembic -c llm_api/databases/vector_database/alembic.ini downgrade -1
+
+# Index blog posts into Postgres + embed into pgvector
+index-db-embed:
+	@echo "Indexing and embedding blog posts..."
+	cd blog_index && uv run python main.py \
+		--remote-url "$(GITHUB_REMOTE_URL)" \
+		--db \
+		--embed

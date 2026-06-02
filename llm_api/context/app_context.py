@@ -1,7 +1,7 @@
 import logging
 from typing import Optional
 
-from llm_api.database.database import DatabaseEngineManager
+from llm_api.databases.database import DatabaseEngineManager
 from llm_api.instrumentation.setup import InstrumentationSetup
 from llm_api.search.blog_posts_indexer import BlogPostsIndexer
 from llm_api.search.blog_search import BlogSearch

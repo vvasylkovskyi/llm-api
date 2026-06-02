@@ -12,6 +12,11 @@ jobs:
       DB_USER: postgres
       DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
       DB_NAME: mydb
+      DB_VECTOR_HOST: 100.95.50.80
+      DB_VECTOR_PORT: 5433
+      DB_VECTOR_USER: pgvector
+      DB_VECTOR_PASSWORD: Test1234
+      DB_VECTOR_NAME: mydb
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GITHUB_REMOTE_URL: https://github.com/vvasylkovskyi/vvasylkovskyi.github.io/tree/main/content/blog
     steps:
@@ -25,4 +30,4 @@ jobs:
         run: |
           cd blog_index && uv run python main.py \
             --remote-url "$GITHUB_REMOTE_URL" \
-            --db
+            --db --embed

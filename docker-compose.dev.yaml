@@ -12,5 +12,29 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  pgvector-db:
+    container_name: pgvector-db
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_VECTOR_USER:-pgvector}
+      POSTGRES_PASSWORD: ${DB_VECTOR_PASSWORD:-Test1234}
+      POSTGRES_DB: ${DB_VECTOR_NAME:-mydb}
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgvector_data:/var/lib/postgresql/data
+      - ./pgvector/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: >
+        psql -U ${DB_VECTOR_USER:-pgvector} -d ${DB_VECTOR_NAME:-mydb} -c
+        "SELECT 1 FROM pg_extension WHERE extname = 'vector';"
+        | grep -q 1 || exit 1
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
 volumes:
   postgres_data:
+  pgvector_data:

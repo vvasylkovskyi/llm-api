@@ -46,7 +46,7 @@ jobs:
           docker compose pull
           docker compose up -d
 
-  migrate:
+  migrate_relational_database:
     runs-on: [self-hosted, Mac]
     needs: deploy
     env:
@@ -63,8 +63,29 @@ jobs:
         run: uv sync
 
       - name: Create database if not exists
-        run: uv run python -m llm_api.database.create_db
+        run: uv run python -m llm_api.databases.relational_database.create_db
 
       - name: Run Alembic migrations
-        run: uv run alembic -c llm_api/database/alembic.ini upgrade head
+        run: uv run alembic -c llm_api/databases/relational_database/alembic.ini upgrade head
 
+  migrate_vector_database:
+    runs-on: [self-hosted, Mac]
+    needs: deploy
+    env:
+      DB_HOST: 100.95.50.80
+      DB_PORT: 5432
+      DB_USER: pgvector
+      DB_PASSWORD: Test1234
+      DB_NAME: mydb
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Create database if not exists
+        run: uv run python -m llm_api.databases.vector_database.create_db
+
+      - name: Run Alembic migrations
+        run: uv run alembic -c llm_api/databases/vector_database/alembic.ini upgrade head

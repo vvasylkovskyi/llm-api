@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
 
-from llm_api.database.database import DatabaseEngineManager
+from llm_api.databases.database import DatabaseEngineManager, VectorDatabaseEngineManager
 from llm_api.http.response import handle_response
 
 health_check_router = APIRouter(prefix="/health-check")
@@ -21,3 +21,15 @@ async def health_check_db():
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"DB error: {str(e)}") from e
+
+
+@health_check_router.get("/vector-db")
+async def health_check_vector_db():
+    try:
+        if await VectorDatabaseEngineManager.ping():
+            return {"status": "ok", "vector_db": "reachable", "pgvector": "enabled"}
+        raise HTTPException(status_code=500, detail="pgvector extension not found")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Vector DB error: {str(e)}") from e
