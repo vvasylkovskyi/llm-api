@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
 
-from llm_api.databases.database import DatabaseEngineManager, VectorDatabaseEngineManager
+from llm_api.databases.relational_database.database_manager import DatabaseEngineManager
+from llm_api.databases.vector_database.database_manager import VectorDatabaseEngineManager
 from llm_api.http.response import handle_response
 
 health_check_router = APIRouter(prefix="/health-check")
