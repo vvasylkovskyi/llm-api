@@ -6,7 +6,7 @@ from litellm import ModelResponse
 
 from llm_api.agent.base_agent import BaseAgent
 from llm_api.context.app_context import AppContext
-from llm_api.search.blog_search import BlogPost
+from llm_api.search.hybrid_blog_search import HybridSearchResult
 
 logger = logging.getLogger(__name__)
 
@@ -54,10 +54,10 @@ He has a strong interest in making complex topics accessible — several of his 
 - When relevant blog posts are provided below in the context block, prefer information from them over your background knowledge. Quote or summarise from them directly."""
 
     async def run(self, input_message: str) -> str:
-        blog_search = AppContext.get_instance().blog_search
-        results = await blog_search.search(input_message) if blog_search is not None else []
+        hybrid_search = AppContext.get_instance().hybrid_search
+        results = await hybrid_search.search(input_message) if hybrid_search is not None else []
         if results:
-            logger.info(f"Blog search injecting {len(results)} posts: {[p.slug for p in results]}")
+            logger.info(f"Hybrid search (RRF): {len(results)} results for query='{input_message}'")
 
         messages = [
             {"role": "system", "content": self._build_system_prompt(results)},
@@ -66,16 +66,15 @@ He has a strong interest in making complex topics accessible — several of his 
         response = cast(ModelResponse, await litellm.acompletion(model=self.model, messages=messages))
         return response.choices[0].message.content or ""
 
-    def _build_system_prompt(self, results: list[BlogPost]) -> str:
+    def _build_system_prompt(self, results: list[HybridSearchResult]) -> str:
         if not results:
             return self.system_prompt
 
-        context = "\n\n## Relevant blog posts\n"
-        for post in results:
-            tags = ", ".join(post.tags) if post.tags else ""
-            context += f"\n### {post.title} ({post.date})"
-            if tags:
-                context += f" [{tags}]"
-            context += f"\n{post.body}\n"
+        context = "\n\n## Relevant content from Viktor's blog\n"
+        for result in results:
+            header = f"\n### {result.title}" if result.title else f"\n### {result.post_slug}"
+            if result.tags:
+                header += f" [{', '.join(result.tags)}]"
+            context += header + f"\n{result.content}\n"
 
         return self.system_prompt + context
