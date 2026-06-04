@@ -23,6 +23,10 @@ class AppSettings(BaseSettings):
     db_vector_name: str = "mydb"
     db_vector_host: str = "100.95.50.80"
     db_vector_port: str = "5433"
+    openai_api_key: str = ""
+    ssl_ca_bundle: str = ""
+    hybrid_search_top_k: int = 5
+    rrf_k: int = 60
 
     @computed_field
     @property
